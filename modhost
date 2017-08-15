@@ -1,0 +1,116 @@
+#! /usr/bin/python3                                                        
+ 
+"""
+     Manage monitored hosts by creating/deleting symbolic links from
+     /etc/naemon/hosts.enabled to /etc/naemon/hosts.available and
+    will restart naemon.
+
+
+    This version of the program does not check naemon to insure
+    it has started without error.
+
+    The program is invoked by using symbolic links. The links are named:
+
+        enhost -- enable a host
+        dishost -- disable a host
+        listhosts -- list all hosts
+ 
+"""
+NAEMON_ETC = '/etc/naemon'
+NAEMON_CFG = NAEMON_ETC + '/naemon.cfg'
+NAEMON_AVAILABLE = NAEMON_ETC + '/hosts.available'
+NAEMON_ENABLED = NAEMON_ETC +   '/hosts.enabled'
+NAEMON_CFG_SUFFIX = ".cfg"
+NAEMON_INCLUDE  = "include="
+
+import argparse
+import sys
+import os
+from os.path import isfile,join
+import subprocess
+
+def find(name,path):
+	for root,dirs,files in os.walk(path):
+		if name + NAEMON_CFG_SUFFIX in files:
+			return os.path.join(root,name + NAEMON_CFG_SUFFIX)
+		else:
+			return None
+
+def restart():
+	"""
+		restart naemon
+	"""
+	subprocess.run(['/bin/systemctl','restart', 'naemon'])
+
+def enhost(host):
+    """
+	First, search the available hosts directory for the
+	desired host. If it doesn't exist, exit...
+
+	Next, search the enabled hosts directory for the 
+	desired host. If it exists, exit...
+
+	Create a symbolic link in the enabled directory.
+
+	(optional) restart naemon
+
+    """
+    available = find(host,NAEMON_AVAILABLE)
+    if not available:
+        print("%s not found in available directory -- " % host + NAEMON_AVAILABLE)
+        return 
+
+    enabled = find(host,NAEMON_ENABLED)
+    if enabled:
+        print("%s is already enabled" % host)
+        return
+    src = available
+    dest = NAEMON_ENABLED + '/' + host + NAEMON_CFG_SUFFIX
+    print("Linking %s to %s" % (src,dest))
+    os.symlink(src,dest)
+    restart()
+    listhosts()
+
+def dishost(host):
+    available = find(host,NAEMON_AVAILABLE)
+    if not available:
+        print("%s not found in available directory -- " % host + NAEMON_AVAILABLE)
+
+    enabled = find(host,NAEMON_ENABLED)
+    if not enabled:
+        print("%s is not enabled" % host)
+        return
+    print("Removing %s" % enabled)
+    os.remove(enabled)
+    restart()
+    listhosts()
+
+def listhosts():
+	print("Available:")
+	files = [f for f in os.listdir(NAEMON_AVAILABLE) if isfile(join(NAEMON_AVAILABLE,f))]
+	for file in files:
+		print("\t" + file)
+
+
+	print("Enabled:")
+	files = [f for f in os.listdir(NAEMON_ENABLED) if isfile(join(NAEMON_ENABLED,f))]
+	for file in files:
+		print("\t" + file)
+
+
+if __name__ == "__main__":
+    command = os.path.basename(sys.argv[0])     
+    if command == 'enhost':
+        enhost(sys.argv[1])
+    elif command == 'dishost':
+        dishost(sys.argv[1])
+    elif command == 'listhosts':
+        listhosts()	
+    else:
+        print("Use enhost, dishost, or listhosts instead")
+    sys.exit()
+
+
+
+ 
+
