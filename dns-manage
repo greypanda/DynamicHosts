@@ -1,0 +1,112 @@
+#! /usr/bin/python3                                                        
+ 
+"""
+     Manage host dns by creating/deleting symbolic links from
+     /etc/dnsmasq.d/hosts.enabled to /etc/dnsmasq.d/hosts.available.
+
+    There is usually no need to restart dnsmasq. 
+
+
+
+    The program is invoked by using symbolic links. The links are named:
+
+        dns-enable -- enable a host
+        dns-disable -- disable a host
+        dns-list -- list all hosts
+ 
+"""
+DNSMASQ_ETC = '/etc/dnsmasq.d'
+DNSMASQ_AVAILABLE = DNSMASQ_ETC + '/hosts.available'
+DNSMASQ_ENABLED = DNSMASQ_ETC +   '/hosts.enabled'
+DNSMASQ_CFG_SUFFIX = ".dns"
+
+import argparse
+import sys
+import os
+from os.path import isfile,join
+import subprocess
+
+def find(name,path):
+	for root,dirs,files in os.walk(path):
+		if name + DNSMASQ_CFG_SUFFIX in files:
+			return os.path.join(root,name + DNSMASQ_CFG_SUFFIX)
+		else:
+			return None
+
+def restart():
+	"""
+		restart naemon
+	"""
+	subprocess.run(['/bin/systemctl','restart', 'naemon'])
+
+def enhost(host):
+    """
+	First, search the available hosts directory for the
+	desired host. If it doesn't exist, exit...
+
+	Next, search the enabled hosts directory for the 
+	desired host. If it exists, exit...
+
+	Create a symbolic link in the enabled directory.
+
+
+    """
+    available = find(host,DNSMASQ_AVAILABLE)
+    if not available:
+        print("%s not found in available directory -- " % host + DNSMASQ_AVAILABLE)
+        return 
+
+    enabled = find(host,DNSMASQ_ENABLED)
+    if enabled:
+        print("%s is already enabled" % host)
+        return
+    src = available
+    dest = DNSMASQ_ENABLED + '/' + host + DNSMASQ_CFG_SUFFIX
+    print("Linking %s to %s" % (src,dest))
+    os.symlink(src,dest)
+    restart()
+    listhosts()
+
+def dishost(host):
+    available = find(host,DNSMASQ_AVAILABLE)
+    if not available:
+        print("%s not found in available directory -- " % host + DNSMASQ_AVAILABLE)
+
+    enabled = find(host,DNSMASQ_ENABLED)
+    if not enabled:
+        print("%s is not enabled" % host)
+        return
+    print("Removing %s" % enabled)
+    os.remove(enabled)
+    restart()
+    listhosts()
+
+def listhosts():
+	print("Available:")
+	files = [f for f in os.listdir(DNSMASQ_AVAILABLE) if isfile(join(DNSMASQ_AVAILABLE,f))]
+	for file in files:
+		print("\t" + file)
+
+
+	print("Enabled:")
+	files = [f for f in os.listdir(DNSMASQ_ENABLED) if isfile(join(DNSMASQ_ENABLED,f))]
+	for file in files:
+		print("\t" + file)
+
+
+if __name__ == "__main__":
+    command = os.path.basename(sys.argv[0])     
+    if command == 'dns-enable':
+        enhost(sys.argv[1])
+    elif command == 'dns-disable':
+        dishost(sys.argv[1])
+    elif command == 'dns-list':
+        listhosts()	
+    else:
+        print("Use dns-enable, dns-disable, dns-list instead")
+    sys.exit()
+
+
+
+ 
+
