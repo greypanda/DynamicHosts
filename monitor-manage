@@ -100,14 +100,14 @@ def listhosts():
 
 if __name__ == "__main__":
     command = os.path.basename(sys.argv[0])     
-    if command == 'enhost':
+    if command == 'monitor-enable':
         enhost(sys.argv[1])
-    elif command == 'dishost':
+    elif command == 'monitor-disable':
         dishost(sys.argv[1])
-    elif command == 'listhosts':
+    elif command == 'monitor-list':
         listhosts()	
     else:
-        print("Use enhost, dishost, or listhosts instead")
+        print("Use monitor-enable, monitor-disable, monitor-list instead")
     sys.exit()
 
 
