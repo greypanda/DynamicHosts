@@ -53,8 +53,8 @@ Use xxx-list to see what hosts are defined. It will show those in both available
 To enable a host, just execute xxx-enable <hostname>. 
 To disable a host, just execute xxx-disable <hostname>.
 
-My version of the program embeds the ".cfg" suffix in the code so you just use the host name
-in the command line, not the "host.cfg". You can change this to match your schema.
+My version of the program embeds the ".dns" suffix in the code so you just use the host name
+in the command line, not the "host.dns". You can change this to match your schema.
 
 The program does basic checking of the files to insure the existence of an available config
 and enabled  config so you can't change a working configuration.
