@@ -4,7 +4,8 @@
      Manage host dns by creating/deleting symbolic links from
      /etc/dnsmasq.d/hosts.enabled to /etc/dnsmasq.d/hosts.available.
 
-    There is usually no need to restart dnsmasq. 
+    There should be no need to restart dnsmasq, but adding symbolic links doesn't
+    seem to trigger a reload of the config.. 
 
 
 
