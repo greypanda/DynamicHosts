@@ -10,10 +10,7 @@ there are no spurious alerts being generated when I disconnect something. In add
 Using an idea from the Linux Apache configuration scheme, this project uses two directories to
 dynamically configure applications with hosts. It only requires one change to the config file.
 
-Add an additional line in naemon.cfg to point to an additional directory called "available.hosts"
-and create two directories: available.hosts and enabled.hosts.
-
-Likewise, a line in dnsmasq.conf will direct dnsmasq to monitor a directory for changes.
+A line in dnsmasq.conf will direct dnsmasq to monitor a directory for changes.
 
 Available.hosts contains host configuration files that can be enabled. Enabled.hosts contains
 symbolic links to available.hosts and are hosts that are active.
@@ -35,10 +32,11 @@ distributions, you may have to modify paths or file names. I did not test this w
 it should work if the paths are changed to match the installation.
 
 For Naemon:
-* Add cfg_dir=/etc/naemon/hosts.enabled to naemon.cfg.
-* Add two directories to /etc/naemon named hosts.available and hosts.enabled.
+* Add two directories:
+* *  To /etc/naemon named hosts.available
+* *  To /etc/naemon/conf.d named hosts.enabled.
 * Copy monitor-manage to /usr/bin. Make sure it is executable.
-* Create three symbolic links to modhost in /usr/bin named monitor-enable, monitor-disable,monitor-list.
+* Create three symbolic links to monitor-manage in /usr/bin named monitor-enable, monitor-disable,monitor-list.
 * Put your host configuration files in hosts.available.
 
 For dnsmasq:
@@ -58,3 +56,5 @@ in the command line, not the "host.dns". You can change this to match your schem
 
 The program does basic checking of the files to insure the existence of an available config
 and enabled  config so you can't change a working configuration.
+
+Althouh dnsmasq will usually notice changes in the configuration file as described, it appears that adding a symbolic link doesn't always reread the config. I added a systemctl restart dnsmasq until I can get that problem resolved.
